@@ -349,7 +349,7 @@ ADD_TIER_SLOT1_SETS = {
 }
 
 # ---------------------------------------------------------
-# 4. 정밀 가치 점수 환산 로직 (보공 = 뎀 동등화 보정 적용)
+# 4. 정밀 가치 점수 환산 로직 (뎀1% = 보공1% 적용)
 # ---------------------------------------------------------
 def calculate_score(option_text, is_magic=False, is_additional=False):
     main_stat = "INT" if is_magic else "STR"
@@ -364,7 +364,7 @@ def calculate_score(option_text, is_magic=False, is_additional=False):
         except:
             pass
 
-    # 2. 보스 몬스터 데미지: 보공 45% = 52.0점, 보공 40% = 46.0점, 보공 35% = 40.0점
+    # 2. 보스 몬스터 데미지
     if "보스 몬스터 데미지 +" in option_text:
         if "보스 몬스터 데미지 +45%" in option_text:
             return 52.0
@@ -449,7 +449,7 @@ def calculate_score(option_text, is_magic=False, is_additional=False):
         except:
             pass
 
-    # 12. 캐릭터 기준 9레벨 당 스탯 (250제 기준 250 // 9 = 27단계)
+    # 12. 캐릭터 기준 9레벨 당 스탯
     if "캐릭터 기준 9레벨 당" in option_text:
         try:
             val = float(re.search(r"\+(\d+)", option_text).group(1))
@@ -464,55 +464,70 @@ def calculate_score(option_text, is_magic=False, is_additional=False):
     return 0.0
 
 # ---------------------------------------------------------
-# 5. 모드별 맞춤 목표 드롭다운 목록
+# 5. 등장 옵션 텍스트 기반 드롭다운 목록 (이상 판정 지원)
 # ---------------------------------------------------------
 MAIN_TARGET_OPTIONS = [
     "선택 안 함 (무관)",
-    "공/마 13% 이상",
-    "공/마 10% 이상",
-    "보공 45%",
-    "보공 40% 이상",
-    "보공 35% 이상",
-    "방무 40% 이상",
-    "방무 35% 이상"
+    "공/마 +13%",
+    "공/마 +10%",
+    "보스 몬스터 데미지 +45%",
+    "보스 몬스터 데미지 +40%",
+    "보스 몬스터 데미지 +35%",
+    "몬스터 방어율 무시 +45%",
+    "몬스터 방어율 무시 +40%",
+    "몬스터 방어율 무시 +35%"
 ]
 
 ADD_TARGET_OPTIONS = [
     "선택 안 함 (무관)",
-    "공/마 13% 이상",
-    "공/마 10% 이상",
-    "보공 20% (레전)",
-    "보공 14% 이상",
-    "공/마 +32 이상",
-    "방무 7% 이상"
+    "공/마 +13%",
+    "공/마 +10%",
+    "보스 몬스터 데미지 +20%",
+    "보스 몬스터 데미지 +14%",
+    "공/마 +32",
+    "몬스터 방어율 무시 +7%",
+    "몬스터 방어율 무시 +6%"
 ]
 
 def matches_target_condition(option_text, target_condition, is_magic=False):
     target_stat = "마력" if is_magic else "공격력"
     if target_condition == "선택 안 함 (무관)":
         return True
-    elif target_condition == "공/마 13% 이상":
+
+    # 1. 공/마 매칭 (선택 수치 이상이면 참)
+    if "공/마 +13%" in target_condition:
         return f"{target_stat} +13%" in option_text
-    elif target_condition == "공/마 10% 이상":
+    elif "공/마 +10%" in target_condition:
         return (f"{target_stat} +10%" in option_text) or (f"{target_stat} +13%" in option_text)
-    elif target_condition == "보공 45%":
+
+    # 2. 보공 매칭 (선택 수치 이상이면 참)
+    if "보스 몬스터 데미지 +45%" in target_condition:
         return "보스 몬스터 데미지 +45%" in option_text
-    elif target_condition == "보공 40% 이상":
+    elif "보스 몬스터 데미지 +40%" in target_condition:
         return ("보스 몬스터 데미지 +40%" in option_text) or ("보스 몬스터 데미지 +45%" in option_text)
-    elif target_condition == "보공 35% 이상":
+    elif "보스 몬스터 데미지 +35%" in target_condition:
         return ("보스 몬스터 데미지 +35%" in option_text) or ("보스 몬스터 데미지 +40%" in option_text) or ("보스 몬스터 데미지 +45%" in option_text)
-    elif target_condition == "보공 20% (레전)":
+    elif "보스 몬스터 데미지 +20%" in target_condition:
         return "보스 몬스터 데미지 +20%" in option_text
-    elif target_condition == "보공 14% 이상":
+    elif "보스 몬스터 데미지 +14%" in target_condition:
         return ("보스 몬스터 데미지 +14%" in option_text) or ("보스 몬스터 데미지 +20%" in option_text)
-    elif target_condition == "공/마 +32 이상":
-        return f"{target_stat} +32" in option_text
-    elif target_condition == "방무 40% 이상":
+
+    # 3. 방무 매칭 (선택 수치 이상이면 참)
+    if "몬스터 방어율 무시 +45%" in target_condition:
+        return "몬스터 방어율 무시 +45%" in option_text
+    elif "몬스터 방어율 무시 +40%" in target_condition:
         return ("몬스터 방어율 무시 +40%" in option_text) or ("몬스터 방어율 무시 +45%" in option_text)
-    elif target_condition == "방무 35% 이상":
+    elif "몬스터 방어율 무시 +35%" in target_condition:
         return ("몬스터 방어율 무시 +35%" in option_text) or ("몬스터 방어율 무시 +40%" in option_text) or ("몬스터 방어율 무시 +45%" in option_text)
-    elif target_condition == "방무 7% 이상":
-        return ("몬스터 방어율 무시 +7%" in option_text)
+    elif "몬스터 방어율 무시 +7%" in target_condition:
+        return "몬스터 방어율 무시 +7%" in option_text
+    elif "몬스터 방어율 무시 +6%" in target_condition:
+        return ("몬스터 방어율 무시 +6%" in option_text) or ("몬스터 방어율 무시 +7%" in option_text)
+
+    # 4. 플랫 공/마 매칭
+    if "공/마 +32" in target_condition:
+        return f"{target_stat} +32" in option_text
+
     return False
 
 def check_card_satisfaction(lines, target_conditions, stop_if_better, before_score, is_magic, is_additional):
@@ -565,13 +580,13 @@ def roll_three_lines(mode, current_tier):
     return lines
 
 # ---------------------------------------------------------
-# 7. 비동기 자동 롤링 워커
+# 7. 비동기 자동 롤링 워커 (3단계 속도 모드 탑재)
 # ---------------------------------------------------------
 class AutoRollerThread(QThread):
     roll_tick = pyqtSignal(dict)
     finished_roll = pyqtSignal(dict)
 
-    def __init__(self, mode, current_tier, pity_count, target_conditions, stop_if_better, before_score, is_magic):
+    def __init__(self, mode, current_tier, pity_count, target_conditions, stop_if_better, before_score, is_magic, speed_mode="고속모드"):
         super().__init__()
         self.mode = mode
         self.current_tier = current_tier
@@ -580,6 +595,7 @@ class AutoRollerThread(QThread):
         self.stop_if_better = stop_if_better
         self.before_score = before_score
         self.is_magic = is_magic
+        self.speed_mode = speed_mode  # "일반모드", "고속모드", "초고속모드"
         self.running = True
 
     def run(self):
@@ -587,6 +603,21 @@ class AutoRollerThread(QThread):
         pity = self.pity_count
         cost_per_roll = ROLL_COSTS[self.mode][tier] * 3
         is_add = (self.mode == "에디")
+
+        accumulated_cost = 0
+        accumulated_rolls = 0
+        batch_counter = 0
+
+        # 속도 모드별 배치 크기 및 딜레이 설정
+        if self.speed_mode == "일반모드":
+            batch_limit = 1
+            sleep_ms = 600  # 0.6초
+        elif self.speed_mode == "고속모드":
+            batch_limit = 1
+            sleep_ms = 20   # 0.02초
+        else:  # "초고속모드"
+            batch_limit = 200  # 200회 시행(600후보) 단위로 GUI 갱신 묶음 처리
+            sleep_ms = 1
 
         while self.running:
             candidates = []
@@ -596,14 +627,9 @@ class AutoRollerThread(QThread):
                 score = sum(calculate_score(line[0], self.is_magic, is_add) for line in lines)
                 candidates.append((tier, lines, score))
 
-            data = {
-                "tier": tier,
-                "candidates": candidates,
-                "cost": cost_per_roll,
-                "pity": pity,
-                "rolls_count": 3
-            }
-            self.roll_tick.emit(data)
+            accumulated_cost += cost_per_roll
+            accumulated_rolls += 3
+            batch_counter += 1
 
             satisfied_idx = -1
             for idx, cand in enumerate(candidates):
@@ -612,11 +638,31 @@ class AutoRollerThread(QThread):
                     break
 
             if satisfied_idx != -1:
-                data["satisfied_idx"] = satisfied_idx
+                data = {
+                    "tier": tier,
+                    "candidates": candidates,
+                    "cost": accumulated_cost,
+                    "pity": pity,
+                    "rolls_count": accumulated_rolls,
+                    "satisfied_idx": satisfied_idx
+                }
                 self.finished_roll.emit(data)
                 break
 
-            self.msleep(20)
+            if batch_counter >= batch_limit:
+                data = {
+                    "tier": tier,
+                    "candidates": candidates,
+                    "cost": accumulated_cost,
+                    "pity": pity,
+                    "rolls_count": accumulated_rolls
+                }
+                self.roll_tick.emit(data)
+                accumulated_cost = 0
+                accumulated_rolls = 0
+                batch_counter = 0
+                if sleep_ms > 0:
+                    self.msleep(sleep_ms)
 
     def stop(self):
         self.running = False
@@ -743,7 +789,7 @@ class PotentialCard(QFrame):
             self.diff_btn.setStyleSheet(f"background-color: #1b263b; color: {txt_color}; font-weight: bold; border: 1px solid {txt_color};")
 
 # ---------------------------------------------------------
-# 9. 큐브 재설정 창
+# 9. 큐브 재설정 창 (속도 선택 및 4개 프리셋 지원)
 # ---------------------------------------------------------
 class CubeDialog(QDialog):
     def __init__(self, parent, mode="윗잠"):
@@ -751,15 +797,24 @@ class CubeDialog(QDialog):
         self.main_app = parent
         self.mode = mode
         self.setWindowTitle(f"잠재능력 재설정 ({self.mode})")
-        self.setFixedSize(880, 560)
+        self.setFixedSize(880, 600)
 
-        self.before_tier = self.main_app.main_tier if mode == "윗잠" else self.main_app.add_tier
-        self.before_lines = list(self.main_app.main_lines if mode == "윗잠" else self.main_app.add_lines)
-        self.pity_count = self.main_app.main_pity if mode == "윗잠" else self.main_app.add_pity
+        cur_weapon = self.main_app.get_current_weapon_data()
+        self.before_tier = cur_weapon["main_tier"] if mode == "윗잠" else cur_weapon["add_tier"]
+        self.before_lines = list(cur_weapon["main_lines"] if mode == "윗잠" else cur_weapon["add_lines"])
+        self.pity_count = cur_weapon["main_pity"] if mode == "윗잠" else cur_weapon["add_pity"]
         self.after_data = [None, None, None]
         self.worker = None
 
         self.session_rolls = 0
+
+        # 4개 프리셋 슬롯 데이터
+        self.presets = {
+            "프리셋 1": ["선택 안 함 (무관)", "선택 안 함 (무관)", "선택 안 함 (무관)"],
+            "프리셋 2": ["선택 안 함 (무관)", "선택 안 함 (무관)", "선택 안 함 (무관)"],
+            "프리셋 3": ["선택 안 함 (무관)", "선택 안 함 (무관)", "선택 안 함 (무관)"],
+            "프리셋 4": ["선택 안 함 (무관)", "선택 안 함 (무관)", "선택 안 함 (무관)"]
+        }
 
         self.init_ui()
         self.set_roll_view(1)
@@ -776,6 +831,7 @@ class CubeDialog(QDialog):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
+        # 상단 카드 영역
         self.card_center_layout = QHBoxLayout()
         self.card_center_layout.setContentsMargins(0, 0, 0, 0)
         self.card_center_layout.setSpacing(14)
@@ -802,6 +858,7 @@ class CubeDialog(QDialog):
         self.card_center_layout.addStretch(1)
         layout.addLayout(self.card_center_layout)
 
+        # 통계 피드백 라벨
         self.lbl_stats = QLabel("현재 재설정 횟수: 0회 | 누적 소모 메소: 0 메소")
         self.lbl_stats.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_stats.setStyleSheet("""
@@ -815,6 +872,7 @@ class CubeDialog(QDialog):
         """)
         layout.addWidget(self.lbl_stats)
 
+        # 천장 진행도 바
         pity_group = QFrame()
         pity_group.setStyleSheet("background-color: #131a24; border-radius: 6px; padding: 5px; border: 1px solid #2a374a;")
         pity_layout = QVBoxLayout()
@@ -846,6 +904,7 @@ class CubeDialog(QDialog):
         pity_group.setLayout(pity_layout)
         layout.addWidget(pity_group)
 
+        # 조작 콘솔
         ctrl_group = QGroupBox("재설정 실행")
         ctrl_vbox = QVBoxLayout()
         ctrl_vbox.setSpacing(5)
@@ -862,6 +921,20 @@ class CubeDialog(QDialog):
         manual_box.addWidget(self.btn_roll_3)
         ctrl_vbox.addLayout(manual_box)
 
+        # 프리셋 선택 바
+        preset_box = QHBoxLayout()
+        preset_box.addWidget(QLabel("프리셋:"))
+        self.cb_preset_select = QComboBox()
+        self.cb_preset_select.addItems(["프리셋 1", "프리셋 2", "프리셋 3", "프리셋 4"])
+        self.cb_preset_select.currentTextChanged.connect(self.load_preset_to_targets)
+        preset_box.addWidget(self.cb_preset_select)
+
+        btn_save_preset = QPushButton("현재 조건 프리셋에 저장")
+        btn_save_preset.clicked.connect(self.save_current_to_preset)
+        preset_box.addWidget(btn_save_preset)
+        ctrl_vbox.addLayout(preset_box)
+
+        # 목표 옵션 지정 (실제 등장 텍스트)
         target_box = QHBoxLayout()
         target_box.addWidget(QLabel("목표 옵션 지정:"))
 
@@ -875,13 +948,20 @@ class CubeDialog(QDialog):
             target_box.addWidget(cb)
         ctrl_vbox.addLayout(target_box)
 
+        # 자동 재설정 및 속도 모드 바
         auto_box = QHBoxLayout()
         self.chk_stop_better = QCheckBox("현재(BEFORE)보다 점수 높으면 정지")
         self.chk_stop_better.setChecked(True)
         self.chk_stop_better.setStyleSheet("color: #f1c40f; font-weight: bold;")
         auto_box.addWidget(self.chk_stop_better)
 
-        self.btn_auto = QPushButton("고속 자동 재설정 (3회 단위)")
+        auto_box.addWidget(QLabel("속도:"))
+        self.cb_speed_mode = QComboBox()
+        self.cb_speed_mode.addItems(["고속모드", "초고속모드", "일반모드 (0.6초)"])
+        self.cb_speed_mode.setCurrentText("고속모드")
+        auto_box.addWidget(self.cb_speed_mode)
+
+        self.btn_auto = QPushButton("자동 재설정 시작 (3회 단위)")
         self.btn_auto.clicked.connect(self.start_auto)
         auto_box.addWidget(self.btn_auto)
 
@@ -931,6 +1011,17 @@ class CubeDialog(QDialog):
 
         self.setLayout(self.root_stack)
 
+    def save_current_to_preset(self):
+        preset_name = self.cb_preset_select.currentText()
+        self.presets[preset_name] = [cb.currentText() for cb in self.cb_targets]
+        QMessageBox.information(self, "프리셋 저장", f"[{preset_name}]에 현재 목표 조건 3개를 저장했어!")
+
+    def load_preset_to_targets(self, preset_name):
+        if preset_name in self.presets:
+            saved_targets = self.presets[preset_name]
+            for i in range(3):
+                self.cb_targets[i].setCurrentText(saved_targets[i])
+
     def set_roll_view(self, count):
         if count == 1:
             self.after_cards[0].setVisible(True)
@@ -949,7 +1040,8 @@ class CubeDialog(QDialog):
         self.btn_roll_3.setText(f"재설정 3회 ({cost*3:,} 메소)")
 
     def update_session_stats_ui(self):
-        self.lbl_stats.setText(f"현재 재설정 횟수: {self.session_rolls:,}회 | 누적 소모 메소: {self.main_app.total_spent_meso:,} 메소")
+        cur_spent = self.main_app.get_current_weapon_data()["total_spent_meso"]
+        self.lbl_stats.setText(f"현재 재설정 횟수: {self.session_rolls:,}회 | 누적 소모 메소: {cur_spent:,} 메소")
 
     def update_pity_ui(self):
         if self.before_tier == "레전드리":
@@ -1020,6 +1112,8 @@ class CubeDialog(QDialog):
 
         target_conditions = [cb.currentText() for cb in self.cb_targets]
         is_magic = (self.main_app.weapon_type == "마력")
+        selected_speed = self.cb_speed_mode.currentText()
+        speed_key = "일반모드" if "일반모드" in selected_speed else selected_speed
 
         self.worker = AutoRollerThread(
             self.mode,
@@ -1028,7 +1122,8 @@ class CubeDialog(QDialog):
             target_conditions,
             self.chk_stop_better.isChecked(),
             self.before_card.score,
-            is_magic
+            is_magic,
+            speed_mode=speed_key
         )
         self.worker.roll_tick.connect(self.on_auto_tick)
         self.worker.finished_roll.connect(self.on_auto_finished)
@@ -1083,15 +1178,17 @@ class CubeDialog(QDialog):
             self.update_cost_labels()
             self.update_pity_ui()
 
+            # 현재 활성화된 무기 데이터에 동기화
+            cur_weapon = self.main_app.get_current_weapon_data()
             if self.mode == "윗잠":
-                self.main_app.main_tier = tier
-                self.main_app.main_lines = lines
-                self.main_app.main_pity = self.pity_count
+                cur_weapon["main_tier"] = tier
+                cur_weapon["main_lines"] = lines
+                cur_weapon["main_pity"] = self.pity_count
                 self.main_app.cb_main_tier_start.setCurrentText(tier)
             else:
-                self.main_app.add_tier = tier
-                self.main_app.add_lines = lines
-                self.main_app.add_pity = self.pity_count
+                cur_weapon["add_tier"] = tier
+                cur_weapon["add_lines"] = lines
+                cur_weapon["add_pity"] = self.pity_count
                 self.main_app.cb_add_tier_start.setCurrentText(tier)
 
             self.main_app.refresh_weapon_ui()
@@ -1109,7 +1206,7 @@ class CubeDialog(QDialog):
         self.root_stack.setCurrentIndex(0)
 
 # ---------------------------------------------------------
-# 10. 메인 윈도우 (메이플 무기 툴팁 UI)
+# 10. 메인 윈도우 (공/마 독립 상태 관리 및 옵션 초기화)
 # ---------------------------------------------------------
 class MapleWeaponTooltipSimulator(QMainWindow):
     def __init__(self):
@@ -1118,26 +1215,46 @@ class MapleWeaponTooltipSimulator(QMainWindow):
         self.resize(520, 680)
 
         self.weapon_type = "공격력"
-        self.total_spent_meso = 0
 
-        self.main_tier = "레어"
-        self.main_lines = roll_three_lines("윗잠", "레어")
-        self.main_pity = 0
-
-        self.add_tier = "레어"
-        self.add_lines = roll_three_lines("에디", "레어")
-        self.add_pity = 0
+        # 2번 요구사항: 공격력 무기와 마력 무기를 완전히 독립된 데이터로 분리
+        self.weapons_data = {
+            "공격력": {
+                "main_tier": "레어",
+                "main_lines": roll_three_lines("윗잠", "레어"),
+                "main_pity": 0,
+                "add_tier": "레어",
+                "add_lines": roll_three_lines("에디", "레어"),
+                "add_pity": 0,
+                "total_spent_meso": 0
+            },
+            "마력": {
+                "main_tier": "레어",
+                "main_lines": roll_three_lines("윗잠", "레어"),
+                "main_pity": 0,
+                "add_tier": "레어",
+                "add_lines": roll_three_lines("에디", "레어"),
+                "add_pity": 0,
+                "total_spent_meso": 0
+            }
+        }
 
         self.init_ui()
         self.apply_theme()
         self.refresh_weapon_ui()
 
+    def get_current_weapon_data(self):
+        return self.weapons_data[self.weapon_type]
+
     def get_weapon_name(self):
         return "데스티니 초극검 (+10)" if self.weapon_type == "공격력" else "데스티니 카르타 (+10)"
 
     def add_spent_meso(self, val):
-        self.total_spent_meso += val
-        self.lbl_meso.setText(f"누적 소모 메소: {self.total_spent_meso:,} 메소")
+        self.get_current_weapon_data()["total_spent_meso"] += val
+        self.update_meso_label()
+
+    def update_meso_label(self):
+        cur_meso = self.get_current_weapon_data()["total_spent_meso"]
+        self.lbl_meso.setText(f"누적 소모 메소: {cur_meso:,} 메소")
 
     def init_ui(self):
         central_widget = QWidget()
@@ -1163,6 +1280,12 @@ class MapleWeaponTooltipSimulator(QMainWindow):
         btn_load = QPushButton("무기 로드")
         btn_load.clicked.connect(self.load_json)
         row1.addWidget(btn_load, 1)
+
+        # 2번 요구사항: 무기 옵션 초기화 버튼 추가
+        btn_reset = QPushButton("옵션 초기화")
+        btn_reset.setStyleSheet("background-color: #c0392b; color: white;")
+        btn_reset.clicked.connect(self.reset_current_weapon)
+        row1.addWidget(btn_reset, 1)
         top_layout.addLayout(row1)
 
         row2 = QHBoxLayout()
@@ -1273,6 +1396,34 @@ class MapleWeaponTooltipSimulator(QMainWindow):
         central_widget.setLayout(root_layout)
         self.setCentralWidget(central_widget)
 
+    def reset_current_weapon(self):
+        reply = QMessageBox.question(
+            self, "옵션 초기화",
+            f"현재 장비 [{self.get_weapon_name()}]의 잠재능력과 소모 메소를 초기화할까?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self.weapons_data[self.weapon_type] = {
+                "main_tier": "레어",
+                "main_lines": roll_three_lines("윗잠", "레어"),
+                "main_pity": 0,
+                "add_tier": "레어",
+                "add_lines": roll_three_lines("에디", "레어"),
+                "add_pity": 0,
+                "total_spent_meso": 0
+            }
+            self.sync_comboboxes()
+            self.refresh_weapon_ui()
+
+    def sync_comboboxes(self):
+        cur_weapon = self.get_current_weapon_data()
+        self.cb_main_tier_start.blockSignals(True)
+        self.cb_add_tier_start.blockSignals(True)
+        self.cb_main_tier_start.setCurrentText(cur_weapon["main_tier"])
+        self.cb_add_tier_start.setCurrentText(cur_weapon["add_tier"])
+        self.cb_main_tier_start.blockSignals(False)
+        self.cb_add_tier_start.blockSignals(False)
+
     def on_type_change(self, idx):
         self.weapon_type = "공격력" if idx == 0 else "마력"
         self.lbl_name.setText(self.get_weapon_name())
@@ -1290,42 +1441,51 @@ class MapleWeaponTooltipSimulator(QMainWindow):
                 "• 공격력: +754 (+285 +469)\n"
                 "• 보스 몬스터 공격 시 데미지 +30%   • 몬스터 방어율 무시 +20%"
             )
+        self.sync_comboboxes()
         self.refresh_weapon_ui()
 
     def on_main_tier_manual_change(self, tier):
-        self.main_tier = tier
-        self.main_pity = 0
-        self.main_lines = roll_three_lines("윗잠", tier)
+        cur_weapon = self.get_current_weapon_data()
+        cur_weapon["main_tier"] = tier
+        cur_weapon["main_pity"] = 0
+        cur_weapon["main_lines"] = roll_three_lines("윗잠", tier)
         self.refresh_weapon_ui()
 
     def on_add_tier_manual_change(self, tier):
-        self.add_tier = tier
-        self.add_pity = 0
-        self.add_lines = roll_three_lines("에디", tier)
+        cur_weapon = self.get_current_weapon_data()
+        cur_weapon["add_tier"] = tier
+        cur_weapon["add_pity"] = 0
+        cur_weapon["add_lines"] = roll_three_lines("에디", tier)
         self.refresh_weapon_ui()
 
     def refresh_weapon_ui(self):
-        m_color = TIER_COLORS.get(self.main_tier, "#3498db")
-        self.lbl_main_pot_title.setText(f"잠재옵션 ({self.main_tier})")
+        cur_weapon = self.get_current_weapon_data()
+        main_tier = cur_weapon["main_tier"]
+        add_tier = cur_weapon["add_tier"]
+
+        m_color = TIER_COLORS.get(main_tier, "#3498db")
+        self.lbl_main_pot_title.setText(f"잠재옵션 ({main_tier})")
         self.lbl_main_pot_title.setStyleSheet(f"color: {m_color}; font-size: 12px; font-weight: bold;")
-        self.lbl_sub_grade.setText(f"({self.main_tier} 아이템)")
+        self.lbl_sub_grade.setText(f"({main_tier} 아이템)")
         self.lbl_sub_grade.setStyleSheet(f"color: {m_color}; font-size: 11px;")
 
         for i in range(3):
-            text, badge = self.main_lines[i]
+            text, badge = cur_weapon["main_lines"][i]
             line_color = TIER_COLORS.get("레전드리" if badge == "L" else "유니크" if badge == "U" else "에픽" if badge == "E" else "레어", "#3498db")
             self.main_line_labels[i].setText(f"+ {text}")
             self.main_line_labels[i].setStyleSheet(f"color: {line_color}; font-size: 11px;")
 
-        a_color = TIER_COLORS.get(self.add_tier, "#3498db")
-        self.lbl_add_pot_title.setText(f"에디셔널 잠재옵션 ({self.add_tier})")
+        a_color = TIER_COLORS.get(add_tier, "#3498db")
+        self.lbl_add_pot_title.setText(f"에디셔널 잠재옵션 ({add_tier})")
         self.lbl_add_pot_title.setStyleSheet(f"color: {a_color}; font-size: 12px; font-weight: bold;")
 
         for i in range(3):
-            text, badge = self.add_lines[i]
+            text, badge = cur_weapon["add_lines"][i]
             line_color = TIER_COLORS.get("레전드리" if badge == "L" else "유니크" if badge == "U" else "에픽" if badge == "E" else "레어", "#3498db")
             self.add_line_labels[i].setText(f"+ {text}")
             self.add_line_labels[i].setStyleSheet(f"color: {line_color}; font-size: 11px;")
+
+        self.update_meso_label()
 
     def open_cube_dialog(self, mode):
         dlg = CubeDialog(self, mode)
@@ -1336,16 +1496,11 @@ class MapleWeaponTooltipSimulator(QMainWindow):
         if path:
             data = {
                 "weapon_type": self.weapon_type,
-                "main_tier": self.main_tier,
-                "main_lines": self.main_lines,
-                "main_pity": self.main_pity,
-                "add_tier": self.add_tier,
-                "add_lines": self.add_lines,
-                "add_pity": self.add_pity,
-                "total_spent_meso": self.total_spent_meso
+                "weapons_data": self.weapons_data
             }
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
+            QMessageBox.information(self, "저장 완료", "두 무기의 독립 데이터 저장을 완료했어!")
 
     def load_json(self):
         path, _ = QFileDialog.getOpenFileName(self, "무기 불러오기", "", "JSON Files (*.json)")
@@ -1354,23 +1509,10 @@ class MapleWeaponTooltipSimulator(QMainWindow):
                 data = json.load(f)
             self.weapon_type = data.get("weapon_type", "공격력")
             self.cb_type.setCurrentIndex(0 if self.weapon_type == "공격력" else 1)
-            self.main_tier = data.get("main_tier", "레어")
-            self.main_lines = data.get("main_lines", [])
-            self.main_pity = data.get("main_pity", 0)
-            self.add_tier = data.get("add_tier", "레어")
-            self.add_lines = data.get("add_lines", [])
-            self.add_pity = data.get("add_pity", 0)
-            self.total_spent_meso = data.get("total_spent_meso", 0)
-
-            self.cb_main_tier_start.blockSignals(True)
-            self.cb_add_tier_start.blockSignals(True)
-            self.cb_main_tier_start.setCurrentText(self.main_tier)
-            self.cb_add_tier_start.setCurrentText(self.add_tier)
-            self.cb_main_tier_start.blockSignals(False)
-            self.cb_add_tier_start.blockSignals(False)
-
-            self.lbl_meso.setText(f"누적 소모 메소: {self.total_spent_meso:,} 메소")
+            self.weapons_data = data.get("weapons_data", self.weapons_data)
+            self.sync_comboboxes()
             self.refresh_weapon_ui()
+            QMessageBox.information(self, "로드 완료", "무기 데이터를 성공적으로 불러왔어!")
 
     def apply_theme(self):
         self.setStyleSheet("""
